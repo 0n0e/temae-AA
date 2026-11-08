@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>temae AA</title>
+<style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:8px;background:#fff;color:#000;font:13px "MS Gothic",monospace}button,input,select,textarea{font:inherit}h1,h2{font:inherit;font-weight:bold;margin:0 0 8px}header{margin-bottom:8px}main{display:grid;grid-template-columns:300px minmax(0,1fr);gap:12px}aside{border-right:1px solid #000;padding-right:8px;height:calc(100vh - 44px);overflow:auto}section{border-bottom:1px solid #000;margin-bottom:8px;padding-bottom:8px}label{display:block;margin-top:5px}label output{float:right}textarea,select,input[type=number],input[type=range],input[type=file]{width:100%}textarea{resize:vertical;background:white;color:black}input[type=range],input[type=checkbox]{accent-color:#000}.check{display:flex;align-items:center;gap:4px}.row,.tabs,.footer,.toolbar{display:flex;gap:4px;flex-wrap:wrap}.row>*{flex:1}.toolbar{justify-content:space-between;margin-bottom:8px}.tabs button[aria-pressed=true]{font-weight:bold;text-decoration:underline}.stage{min-width:0}.sheet{overflow:auto;border:1px solid #000;padding:0}.sheet canvas{display:block;max-width:100%;height:auto}.sheet.actual canvas{max-width:none}#status,#densityInfo{margin:8px 0;overflow-wrap:anywhere}.footer{margin-top:8px}button{cursor:pointer}button:disabled{cursor:default}[hidden]{display:none!important}@media(max-width:650px){main{display:block}aside{height:auto;border-right:0;padding-right:0}.stage{margin-top:8px}}
+</style>
+<header><h1>temae AA</h1></header>
+<main><aside>
+<section><h2>画像</h2><label class="file" for="file">画像を選択</label><input id="file" type="file" accept="image/*"><button id="demo">円を読み込む</button></section>
+<section><h2>文字と単語</h2><label for="chars">淡い → 濃い（左から順に）</label><textarea id="chars" rows="2" spellcheck="false">!"#%&amp;'()=~</textarea><label for="mode">文字の配置</label><select id="mode"><option value="overprint">重ね刷り</option><option value="words">単語を分割せずに配置する</option><option value="gradient" selected>濃度に応じてパレットから選ぶ</option><option value="poem">文字列を順に配置する</option></select><label for="words">単語パレット（1行＝1つのまとまり）</label><textarea id="words" rows="4" spellcheck="false">!"#%&amp;'()=~</textarea><label for="wordSelection">単語の選び方</label><select id="wordSelection"><option value="gradient">濃さに応じて単語を選ぶ</option><option value="repeat">入力順で単語を反復する</option></select><label class="check"><input id="autoDensity" type="checkbox" checked>文字・単語の濃さを自動判定</label><label class="check"><input id="matchShape" type="checkbox" checked>3×3の濃度分布も比較する</label><label for="shapeWeight">分布の優先度 <output id="shapeWeightOut"></output></label><input id="shapeWeight" type="range" min="0" max="1" step="0.05" value="0.5"><p class="hint" id="densityInfo" aria-live="polite"></p><label for="poem">反復する文字列</label><textarea id="poem" rows="2">!"#%&amp;'()=~</textarea></section>
+<section><h2>濃淡</h2><label for="toneMode">濃度の取得方法</label><select id="toneMode"><option value="gray" selected>グレースケール（連続した濃淡）</option><option value="binary">二値化（白・黒）</option></select><label for="threshold">二値化のしきい値 <output id="thresholdOut"></output></label><input id="threshold" type="range" min="0" max="255" value="140"><button id="auto">自動しきい値（大津法）</button><label class="check"><input id="invert" type="checkbox">白黒を反転</label><label for="cols">横の文字数 <output id="colsOut"></output></label><input id="cols" type="range" min="30" max="240" value="110"><label for="gamma">濃度補正 <output id="gammaOut"></output></label><input id="gamma" type="range" min="0.3" max="3" step="0.05" value="1"><label for="cutoff">余白にする濃度 <output id="cutoffOut"></output></label><input id="cutoff" type="range" min="0" max="0.8" step="0.01" value="0.03"></section>
+<section id="overprintPanel"><h2>重ね刷り</h2><button id="extreme">高密度設定を適用</button><label for="layers">重ねる量 <output id="layersOut"></output></label><input id="layers" type="range" min="1" max="80" step="1" value="24"><label for="spread">散らしの幅 <output id="spreadOut"></output></label><input id="spread" type="range" min="0" max="4" step="0.05" value="0.35"><label for="angle">回転の幅（±度） <output id="angleOut"></output></label><input id="angle" type="range" min="0" max="180" step="1" value="12"><label for="sizeNoise">大きさの揺らぎ <output id="sizeNoiseOut"></output></label><input id="sizeNoise" type="range" min="0" max="0.8" step="0.05" value="0.2"><label for="opacity">1回のインク濃度 <output id="opacityOut"></output></label><input id="opacity" type="range" min="0.1" max="1" step="0.05" value="0.85"></section><section><h2>配置</h2><label for="font">書体</label><select id="font"><option value="ms-mincho" selected>MS 明朝</option><option value="mono">等幅</option><option value="serif">明朝</option></select><label for="aspect">マスの幅 ÷ 高さ <output id="aspectOut"></output></label><input id="aspect" type="range" min="0.45" max="1.2" step="0.01" value="0.6"><label for="jitter">位置の揺らぎ <output id="jitterOut"></output></label><input id="jitter" type="range" min="0" max="0.45" step="0.01" value="0"><label for="drop">文字の間引き <output id="dropOut"></output></label><input id="drop" type="range" min="0" max="0.6" step="0.01" value="0"><label for="seed">乱数シード</label><div class="row"><input id="seed" type="number" min="0" max="4294967295" value="42"><button id="shuffle">別の揺らぎ</button></div></section>
+</aside><div class="stage"><div class="toolbar"><div class="tabs"><button data-view="aa" aria-pressed="true">文字</button><button data-view="binary" aria-pressed="false">濃度画像</button><button data-view="source" aria-pressed="false">元画像</button></div><label class="check" style="margin:0"><input id="actual" type="checkbox">等倍で表示</label></div><div class="sheet" id="sheet"><canvas id="preview" aria-label="生成したAAのプレビュー"></canvas></div><p id="status" role="status" aria-live="polite"></p><div class="footer"><button id="png">PNGを保存</button><button id="svg">SVGを保存</button><button id="txt">テキストを保存</button><button id="settings">設定を保存</button><button id="loadSettings">設定を読み込む</button><input id="settingsFile" type="file" accept="application/json,.json" hidden></div></div></main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id), ids=['chars','mode','words','wordSelection','autoDensity','matchShape','shapeWeight','poem','toneMode','threshold','invert','cols','gamma','cutoff','font','aspect','jitter','drop','seed','layers','spread','angle','sizeNoise','opacity'];
+const src=document.createElement('canvas'),binary=document.createElement('canvas'),art=document.createElement('canvas');
+let view='aa',name='sample',lines=[],marks=[],layout={},timer,loadToken=0;
+const graphemes=s=>Array.from(new Intl.Segmenter('ja',{granularity:'grapheme'}).segment(s),x=>x.segment);
+function random(seed){let t=seed>>>0;return()=>{t+=0x6D2B79F5;let x=t;x=Math.imul(x^x>>>15,x|1);x^=x+Math.imul(x^x>>>7,x|61);return((x^x>>>14)>>>0)/4294967296}}
+function fontFamily(){const font=$('font').value;if(font==='ms-mincho')return '"MS Mincho", "ＭＳ 明朝", serif';return font==='mono'?'"MS Gothic", monospace':'"Yu Mincho", "Hiragino Mincho ProN", serif'}
+function grayscale(){const d=src.getContext('2d').getImageData(0,0,src.width,src.height).data;const a=new Uint8Array(src.width*src.height);for(let i=0;i<a.length;i++)a[i]=Math.round(.2126*d[i*4]+.7152*d[i*4+1]+.0722*d[i*4+2]);return a}
+// Measure the same glyph size, font and horizontal scaling used in the output.
+// Bilinear integration preserves fractional subcells even at low image resolution.
+function integralAt(sum,w,h,x,y){
+ x=Math.max(0,Math.min(w,x));y=Math.max(0,Math.min(h,y));
+ const x0=Math.floor(x),y0=Math.floor(y),x1=Math.min(w,x0+1),y1=Math.min(h,y0+1),fx=x-x0,fy=y-y0,stride=w+1;
+ return (sum[y0*stride+x0]*(1-fx)+sum[y0*stride+x1]*fx)*(1-fy)+(sum[y1*stride+x0]*(1-fx)+sum[y1*stride+x1]*fx)*fy;
+}
+function nineRegions(sum,w,h,x,y,width,height){
+ const result=[];const x0=Math.max(0,Math.min(w,x)),y0=Math.max(0,Math.min(h,y)),x1=Math.max(x0,Math.min(w,x+width)),y1=Math.max(y0,Math.min(h,y+height));
+ const dx=(x1-x0)/3,dy=(y1-y0)/3;
+ for(let row=0;row<3;row++)for(let col=0;col<3;col++){
+  const l=x0+col*dx,r=l+dx,t=y0+row*dy,b=t+dy;
+  const area=dx*dy,value=integralAt(sum,w,h,r,b)-integralAt(sum,w,h,l,b)-integralAt(sum,w,h,r,t)+integralAt(sum,w,h,l,t);
+  result.push(area>1e-12?Math.max(0,Math.min(1,value/area)):0);
+ }
+ return result;
+}
+function inkPalette(tokens,slotWidth,isWord,font){
+ const c=document.createElement('canvas');c.width=Math.ceil(slotWidth)+8;c.height=28;
+ const ctx=c.getContext('2d',{willReadFrequently:true});ctx.font=font;ctx.textAlign='center';ctx.textBaseline='alphabetic';
+ return tokens.map((text,index)=>{
+  ctx.clearRect(0,0,c.width,c.height);const width=ctx.measureText(text).width;
+  const scale=isWord?1:Math.min(1,slotWidth*.95/Math.max(1,width));
+  ctx.save();ctx.translate(c.width/2,20);ctx.scale(scale,1);ctx.fillText(text,0,0);ctx.restore();
+  const pixels=ctx.getImageData(0,0,c.width,c.height).data,stride=c.width+1,sum=new Float64Array(stride*(c.height+1));
+  for(let y=0;y<c.height;y++){let row=0;for(let x=0;x<c.width;x++){row+=pixels[(y*c.width+x)*4+3]/255;sum[(y+1)*stride+x+1]=sum[y*stride+x+1]+row}}
+  const signature=nineRegions(sum,c.width,c.height,(c.width-slotWidth)/2,4,slotWidth,20);
+  return {text,index,coverage:signature.reduce((a,b)=>a+b,0)/9,signature};
+ }).sort((a,b)=>a.coverage-b.coverage||a.index-b.index);
+}
+function chooseTone(entries,tone,automatic,signature=null,weight=0){
+ if(!automatic)return entries[Math.round(tone*(entries.length-1))].text;
+ const max=entries[entries.length-1].coverage||1,targetTotal=signature?.reduce((a,b)=>a+b,0)||0;
+ function score(e){
+  const densityLoss=(e.coverage/max-tone)**2;
+  if(!signature||!weight||!e.signature||targetTotal<1e-9)return densityLoss;
+  const total=e.signature.reduce((a,b)=>a+b,0);
+  if(total<1e-9)return densityLoss+weight;
+  const shapeLoss=e.signature.reduce((loss,v,i)=>loss+(v/total-signature[i]/targetTotal)**2,0)*4.5;
+  return densityLoss+weight*shapeLoss;
+ }
+ let best=entries[0],bestScore=score(best);
+ for(let i=1;i<entries.length;i++){const value=score(entries[i]);if(value<bestScore){best=entries[i];bestScore=value}}
+ return best.text;
+}
+// A word is one drawing/export unit; spacing and randomness apply to that whole unit.
+function layoutWords({tokens,entries,automatic,selection,cols,rows,cw,ch,pad,span,densityAt,gamma,cutoff,jitter,drop,rng,pick=null}){
+ const marks=[],lines=[];let sequence=0;
+ for(let y=0;y<rows;y++){
+  let line='',cursor=0;
+  for(let x=0;x+span<=cols;x+=span+1){
+   const d=densityAt(x,y,span),tone=Math.pow(d,1/gamma);
+   const keep=rng(),dx=Math.max(-x*cw,Math.min((cols-x-span)*cw,(rng()-.5)*2*jitter*cw)),dy=(rng()-.5)*2*Math.min(jitter*ch,2);
+   // Whole-word occupancy expresses tone even when only one word was supplied.
+   if(d<=cutoff||keep>=tone*(1-drop))continue;
+   const text=selection==='repeat'?tokens[sequence++%tokens.length]:(pick?pick(tone,x,y,span):chooseTone(entries,tone,automatic));
+   marks.push({char:text,x:pad+(x+span/2)*cw+dx,y:pad+y*ch+16+dy,scale:1});
+   line+=' '.repeat(Math.max(0,x-cursor))+text;cursor=x+graphemes(text).length;
+  }
+  lines.push(line+' '.repeat(Math.max(0,cols-cursor)));
+ }
+ return {marks,lines};
+}
+// Independent continuous positions, not a grid. Multiple word impressions accumulate ink.
+function layoutOverprint({tokens,entries,automatic,selection,width,height,pad,densityAt,cols,rows,measure,gamma,cutoff,drop,layers,spread,angle,sizeNoise,opacity,rng,pick=null}){
+ const marks=[],widths=new Map(tokens.map(t=>[t,Math.max(1,measure(t))]));
+ const meanWidth=[...widths.values()].reduce((a,b)=>a+b,0)/tokens.length;
+ const requested=Math.ceil(width*height/((meanWidth+2)*20)*layers),attempts=Math.min(100000,requested);let sequence=0;
+ for(let i=0;i<attempts;i++){
+  const x=rng()*width,y=rng()*height;
+  const footprint=Math.max(1,meanWidth/width*cols);
+  const d=densityAt(Math.max(0,(x-meanWidth/2)/width*cols),Math.min(rows-1,y/height*rows),footprint);
+  const tone=Math.pow(d,1/gamma);
+  if(d<=cutoff||rng()>=Math.pow(tone,1.4)*(1-drop))continue;
+  const text=selection==='repeat'?tokens[sequence++%tokens.length]:(pick?pick(tone,Math.max(0,(x-meanWidth/2)/width*cols),Math.min(rows-1,y/height*rows),footprint):chooseTone(entries,tone,automatic));
+  const rotation=(rng()-.5)*2*angle,a=rotation*Math.PI/180;
+  let scale=1+(rng()-.5)*2*sizeNoise;
+  const tw=widths.get(text),boxW=Math.abs(Math.cos(a))*tw+Math.abs(Math.sin(a))*20,boxH=Math.abs(Math.sin(a))*tw+Math.abs(Math.cos(a))*20;
+  scale=Math.min(scale,width/boxW,height/boxH);
+  const halfW=boxW*scale/2,halfH=boxH*scale/2;
+  const xx=Math.max(halfW,Math.min(width-halfW,x+(rng()-.5)*2*meanWidth*spread));
+  const yy=Math.max(halfH,Math.min(height-halfH,y+(rng()-.5)*40*spread));
+  marks.push({char:text,x:pad+xx,y:pad+yy,scale,scaleY:scale,rotation,opacity,baseline:6});
+ }
+ return {marks,limited:requested>attempts};
+}
+function buildToneField(a,w,h,mode,threshold,invert){
+ const pixels=new Uint8ClampedArray(w*h*4),stride=w+1,sum=new Float64Array((w+1)*(h+1));
+ for(let y=0;y<h;y++){let row=0;for(let x=0;x<w;x++){
+  const i=y*w+x;let v=mode==='binary'?(a[i]<threshold?0:255):a[i];if(invert)v=255-v;
+  pixels[i*4]=pixels[i*4+1]=pixels[i*4+2]=v;pixels[i*4+3]=255;
+  row+=1-v/255;sum[(y+1)*stride+x+1]=sum[y*stride+x+1]+row;
+ }}
+ return {pixels,sum,stride};
+}
+function render(){
+ if(!src.width)return;
+ for(const id of ['threshold','cols','gamma','cutoff','aspect','jitter','drop','layers','spread','angle','sizeNoise','opacity','shapeWeight'])$(id+'Out').textContent=$(id).value;
+ const mode=$('mode').value,isOverprint=mode==='overprint',isWord=mode==='words'||isOverprint,automatic=$('autoDensity').checked;
+ const palette=graphemes($('chars').value.replace(/[\r\n\t]/g,'')),poem=graphemes($('poem').value.replace(/[\r\n\t]/g,' '));
+ const words=$('words').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+ $('overprintPanel').hidden=!isOverprint;$('jitter').disabled=isOverprint;$('words').disabled=false;$('wordSelection').disabled=!isWord;$('poem').disabled=false;$('chars').disabled=false;
+ $('autoDensity').disabled=mode==='poem'||(isWord&&$('wordSelection').value==='repeat');
+ function invalid(message){$('status').textContent=message;for(const id of ['png','svg','txt'])$(id).disabled=true;$('densityInfo').textContent='';const c=$('preview');c.width=1;c.height=1}
+ if((mode==='gradient'&&!palette.length)||(mode==='poem'&&!poem.join('').trim())||(isWord&&!words.length)){invalid('使用する文字・単語を1つ以上入力してください。');return}
+ const w=src.width,h=src.height,a=grayscale(),threshold=+$('threshold').value,inv=$('invert').checked,toneMode=$('toneMode').value;
+ $('threshold').disabled=toneMode!=='binary';$('auto').disabled=toneMode!=='binary';
+ binary.width=w;binary.height=h;const bc=binary.getContext('2d'),{pixels,sum,stride}=buildToneField(a,w,h,toneMode,threshold,inv);const image=bc.createImageData(w,h);image.data.set(pixels);bc.putImageData(image,0,0);
+ const cols=+$('cols').value,ratio=+$('aspect').value,requestedRows=Math.max(1,Math.round(h/w*cols*ratio)),rows=Math.min(requestedRows,600,Math.max(1,Math.floor(12000000/(cols*20*ratio+80)/20)-4)),ch=20,cw=ch*ratio,pad=40,rng=random(+$('seed').value),gamma=+$('gamma').value,cutoff=+$('cutoff').value,jitter=+$('jitter').value,drop=+$('drop').value;
+ art.width=Math.ceil(cols*cw+pad*2);art.height=rows*ch+pad*2;const ctx=art.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,art.width,art.height);ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.font='16px '+fontFamily();lines=[];marks=[];let p=0;
+ const span=isWord?Math.max(...words.map(t=>Math.max(graphemes(t).length,Math.ceil(ctx.measureText(t).width/cw)))):1;
+ if(span>cols){invalid('単語が横幅に収まりません。横の文字数を増やすか、単語を短くしてください（途中では分割しません）。');return}
+ for(const id of ['png','svg','txt'])$(id).disabled=false;
+ const tokens=isWord?words:palette,usesPalette=mode==='gradient'||(isWord&&$('wordSelection').value==='gradient');
+ const entries=usesPalette?(automatic?inkPalette(tokens,span*cw,isWord,ctx.font):tokens.map(text=>({text}))):[];
+ $('densityInfo').textContent=usesPalette?(automatic?'実測した濃さ：淡 → 濃 / '+entries.map(e=>(e.text.trim()||'空白')+' ('+(e.coverage*100).toFixed(1)+'%)').join(' → '):'手動：入力順を淡い → 濃いとして扱います。'):'入力順で反復します。';
+ function densityAt(x,y,span=1){
+  const x0=Math.min(w-1,Math.floor(x*w/cols)),x1=Math.min(w,Math.max(x0+1,Math.floor((x+span)*w/cols))),y0=Math.min(h-1,Math.floor(y*h/rows)),y1=Math.min(h,Math.max(y0+1,Math.floor((y+1)*h/rows)));
+  return Math.max(0,Math.min(1,(sum[y1*stride+x1]-sum[y0*stride+x1]-sum[y1*stride+x0]+sum[y0*stride+x0])/((x1-x0)*(y1-y0))));
+ }
+ const shapeEnabled=automatic&&$('matchShape').checked&&usesPalette,shapeWeight=+$('shapeWeight').value;
+ function pick(tone,x,y,cellSpan=1){
+  const signature=shapeEnabled&&entries.length>1?nineRegions(sum,w,h,x*w/cols,y*h/rows,cellSpan*w/cols,h/rows):null;
+  return chooseTone(entries,tone,automatic,signature,shapeWeight);
+ }
+ if(shapeEnabled)$('densityInfo').textContent+=' / 3×3分布を比較'+(entries.length<2?'（候補が1種類のため選択結果は同じ）':'');
+ let limited=false;
+ if(isOverprint){
+  ({marks,limited}=layoutOverprint({tokens:words,entries,automatic,selection:$('wordSelection').value,width:cols*cw,height:rows*ch,pad,cols,rows,densityAt,measure:t=>ctx.measureText(t).width,gamma,cutoff,drop,layers:+$('layers').value,spread:+$('spread').value,angle:+$('angle').value,sizeNoise:+$('sizeNoise').value,opacity:+$('opacity').value,rng,pick}));
+ }else if(isWord){
+  ({marks,lines}=layoutWords({tokens:words,entries,automatic,selection:$('wordSelection').value,cols,rows,cw,ch,pad,span,densityAt,gamma,cutoff,jitter,drop,rng,pick}));
+ }else{
+  for(let y=0;y<rows;y++){let line='';for(let x=0;x<cols;x++){
+   const density=densityAt(x,y),tone=Math.pow(density,1/gamma);let char=' ';
+   if(density>cutoff)char=mode==='poem'?poem[p++%poem.length]:pick(tone,x,y);
+   const omit=rng()<drop,dx=(rng()-.5)*2*jitter*cw,dy=(rng()-.5)*2*jitter*ch;if(omit)char=' ';line+=char;
+   if(char.trim()){const width=ctx.measureText(char).width;marks.push({char,x:pad+(x+.5)*cw+dx,y:pad+y*ch+16+dy,scale:Math.min(1,cw*.95/Math.max(width,1))})}
+  }lines.push(line)}
+ }
+ const stamps=new Map();
+ if(isOverprint)for(const text of words){const c=document.createElement('canvas');c.width=Math.ceil((ctx.measureText(text).width+8)*2);c.height=56;const g=c.getContext('2d');g.scale(2,2);g.font=ctx.font;g.fillStyle='#000';g.textAlign='center';g.textBaseline='alphabetic';g.fillText(text,c.width/4,20);stamps.set(text,c)}
+ for(const mark of marks){ctx.save();ctx.translate(mark.x,mark.y);ctx.rotate((mark.rotation||0)*Math.PI/180);ctx.scale(mark.scale,mark.scaleY??1);ctx.globalAlpha=mark.opacity??1;if(isOverprint){const c=stamps.get(mark.char);ctx.drawImage(c,-c.width/4,-20+(mark.baseline??0),c.width/2,c.height/2)}else ctx.fillText(mark.char,0,mark.baseline??0);ctx.restore()}
+ $('txt').disabled=isOverprint;$('txt').title=isOverprint?'重なり・回転はテキストでは再現できません。PNG / SVGを使用してください。':'';layout={cw,ch,pad,cols,rows};show();$('status').textContent=name+' · '+cols+' 列 × '+rows+' 行 · '+marks.length.toLocaleString()+(isOverprint?' 回の重ね刷り':isWord?' 単語':' 文字')+(limited?' · 負荷軽減のため試行数を制限':'')+' · シード '+$('seed').value+(rows<requestedRows?' · 大きな縦長画像のため行数を制限':'');
+}
+function show(){const c=$('preview'),s=view==='aa'?art:view==='binary'?binary:src;c.width=s.width;c.height=s.height;c.getContext('2d').drawImage(s,0,0);document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)))}
+function demo(){
+ loadToken++;name='circle';src.width=800;src.height=800;
+ const c=src.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,800,800);
+ c.fillStyle='#000';c.beginPath();c.arc(400,400,240,0,Math.PI*2);c.fill();render();
+}
+async function load(file){if(!file)return;const token=++loadToken;const url=URL.createObjectURL(file);try{const img=new Image();img.src=url;await img.decode();if(token!==loadToken)return;const scale=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));src.width=Math.max(1,Math.round(img.naturalWidth*scale));src.height=Math.max(1,Math.round(img.naturalHeight*scale));const c=src.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,src.width,src.height);c.drawImage(img,0,0,src.width,src.height);name=file.name.replace(/\.[^.]+$/,'');render()}catch(e){if(token===loadToken)$('status').textContent='画像を読み込めません。PNG・JPEG・WebPなどをお試しください。'}finally{URL.revokeObjectURL(url)}}
+function save(blob,ext){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name+'-aa.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000)}
+function flush(){clearTimeout(timer);render()}
+const escapeXML=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+$('png').onclick=()=>{flush();if(!$('png').disabled)art.toBlob(b=>{if(b)save(b,'png')},'image/png')};
+$('txt').onclick=()=>{flush();if(!$('txt').disabled)save(new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'}),'txt')};
+$('svg').onclick=()=>{flush();if($('svg').disabled)return;const texts=marks.map(m=>`<text transform="translate(${m.x.toFixed(3)} ${m.y.toFixed(3)}) rotate(${(m.rotation||0).toFixed(3)}) scale(${m.scale.toFixed(5)} ${(m.scaleY??1).toFixed(5)})" opacity="${(m.opacity??1).toFixed(3)}" y="${m.baseline??0}">${escapeXML(m.char)}</text>`).join('');save(new Blob([`<svg xmlns="http://www.w3.org/2000/svg" width="${art.width}" height="${art.height}" viewBox="0 0 ${art.width} ${art.height}"><rect width="100%" height="100%" fill="white"/><g fill="#000" font-family="${escapeXML(fontFamily())}" font-size="16" text-anchor="middle">${texts}</g></svg>`],{type:'image/svg+xml;charset=utf-8'}),'svg')};
+$('settings').onclick=()=>save(new Blob([JSON.stringify({version:1,settings:Object.fromEntries(ids.map(id=>[id,$(id).type==='checkbox'?$(id).checked:$(id).value]))},null,2)],{type:'application/json'}),'json');
+$('loadSettings').onclick=()=>$('settingsFile').click();
+$('settingsFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(data.version!==1||!data.settings)throw Error();const staged={toneMode:data.settings.toneMode??'binary'};for(const id of ids){const v=data.settings[id],el=$(id);if(v===undefined)continue;if(el.type==='checkbox'){if(typeof v!=='boolean')throw Error();staged[id]=v}else if(el.type==='range'||el.type==='number'){if(!Number.isFinite(Number(v)))throw Error();staged[id]=String(Math.max(Number(el.min),Math.min(Number(el.max),Number(v))))}else{if(typeof v!=='string'||v.length>10000)throw Error();if(el.tagName==='SELECT'&&![...el.options].some(o=>o.value===v))throw Error();staged[id]=v}}for(const [id,v]of Object.entries(staged)){if($(id).type==='checkbox')$(id).checked=v;else $(id).value=v}render()}catch(e){$('status').textContent='設定ファイルを読み込めません。保存したJSONを選択してください。'}finally{$('settingsFile').value=''}};
+$('auto').onclick=()=>{const a=grayscale(),hist=new Uint32Array(256);for(const v of a)hist[v]++;let total=0;for(let i=0;i<256;i++)total+=i*hist[i];let wb=0,sb=0,best=-1,t=128;for(let i=0;i<255;i++){wb+=hist[i];sb+=i*hist[i];const wf=a.length-wb;if(!wb||!wf)continue;const diff=sb/wb-(total-sb)/wf,v=wb*wf*diff*diff;if(v>best){best=v;t=i+1}}$('threshold').value=t;render()};
+$ ('extreme').onclick=()=>{for(const [id,value] of Object.entries({mode:'overprint',layers:55,spread:1,angle:35,sizeNoise:0.45,opacity:0.9,drop:0}))$(id).value=value;view='aa';render()};
+function scheduleRender(id,event){
+ if(event?.isComposing)return;
+ const mode=$('mode').value;
+ if((id==='chars'&&mode!=='gradient')||(id==='poem'&&mode!=='poem')||(id==='words'&&!['words','overprint'].includes(mode)))return;
+ clearTimeout(timer);timer=setTimeout(render,['chars','words','poem'].includes(id)?350:100);
+}
+ids.forEach(id=>{$(id).addEventListener('input',event=>scheduleRender(id,event));$(id).addEventListener('compositionstart',()=>clearTimeout(timer));$(id).addEventListener('compositionend',()=>scheduleRender(id))});
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;show()});$('actual').onchange=()=>$('sheet').classList.toggle('actual',$('actual').checked);$('file').onchange=e=>{load(e.target.files[0]);e.target.value=''};$('demo').onclick=demo;$('shuffle').onclick=()=>{$('seed').value=crypto.getRandomValues(new Uint32Array(1))[0];render()};document.addEventListener('dragover',e=>e.preventDefault());document.addEventListener('drop',e=>{e.preventDefault();load(e.dataTransfer.files[0])});demo();
+</script></html>
